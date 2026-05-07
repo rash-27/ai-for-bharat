@@ -188,13 +188,31 @@ def get_ubid_details(ubid_id: str):
             if delta_months <= 18:
                 status = "ACTIVE"
                 
+        # Build chronological event timeline (newest first)
+        timeline = []
+        for n in nodes:
+            event_date_str = n.get("updated_at") or n.get("created_at")
+            if event_date_str:
+                dt = datetime.fromisoformat(event_date_str)
+                age_months = (datetime.now(dt.tzinfo) - dt).days / 30
+                timeline.append({
+                    "source_system": n.get("source_system", "unknown"),
+                    "company_name": n.get("company_name"),
+                    "event_date": dt.isoformat(),
+                    "age_months": round(age_months, 1),
+                    "is_deciding_event": (dt == latest_event),
+                })
+        # Sort newest → oldest
+        timeline.sort(key=lambda x: x["event_date"], reverse=True)
+
         # Consolidate master profile
         master_profile = {
             "ubid": ubid_id,
             "company_name": nodes[0].get("company_name"),
             "status": status,
             "latest_event_date": latest_event.isoformat() if latest_event else None,
-            "nodes": nodes
+            "nodes": nodes,
+            "event_timeline": timeline,
         }
         
         return master_profile
