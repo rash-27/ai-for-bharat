@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api', // FastAPI default port
+  baseURL: `${BACKEND_URL}/api`,
 });
 
 export const getDashboardStats = async () => {
