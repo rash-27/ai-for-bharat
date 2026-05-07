@@ -34,7 +34,7 @@ index = algolia_client.init_index('business_records')
 
 consumer_conf = {
     'bootstrap.servers': os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
-    'group.id': 'resolution-engine',
+    'group.id': 'resolution-engine-v2',
     'auto.offset.reset': 'earliest'
 }
 consumer = Consumer(consumer_conf)
