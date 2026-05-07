@@ -67,7 +67,7 @@ def get_dashboard_stats():
 def get_pending_reviews():
     query = """
     MATCH (a:BusinessRecord)-[r:PENDING_REVIEW]->(b:BusinessRecord)
-    RETURN a, b, r.score AS score
+    RETURN a, b, r.score AS score, r.features AS features
     """
     with neo4j_driver.session() as session:
         results = session.run(query)
@@ -76,7 +76,8 @@ def get_pending_reviews():
             reviews.append({
                 "node_a": dict(record["a"]),
                 "node_b": dict(record["b"]),
-                "score": record["score"]
+                "score": record["score"],
+                "features": record.get("features")
             })
         return reviews
 
@@ -104,18 +105,30 @@ def resolve_review(payload: ReviewDecision):
             SET new_r.manual = true
             """, id_a=payload.node_a_id, id_b=payload.node_b_id)
             
-            # Fetch node A's UBID
+            # Fetch node A's UBID and node B's old UBID
             node_a = session.run("MATCH (a:BusinessRecord {id: $id}) RETURN a.assigned_ubid AS ubid", id=payload.node_a_id).single()
-            if node_a and node_a["ubid"]:
+            node_b = session.run("MATCH (b:BusinessRecord {id: $id}) RETURN b.assigned_ubid AS ubid", id=payload.node_b_id).single()
+            
+            if node_a and node_b:
                 new_ubid = node_a["ubid"]
-                # Update node B's UBID in Neo4j
-                session.run("MATCH (b:BusinessRecord {id: $id}) SET b.assigned_ubid = $ubid", id=payload.node_b_id, ubid=new_ubid)
+                old_ubid = node_b["ubid"]
                 
-                # Sync Elasticsearch/Algolia
-                write_index.partial_update_object({
-                    "objectID": payload.node_b_id,
-                    "assigned_ubid": new_ubid
-                })
+                # 1. Update ALL nodes in Neo4j that had Node B's old UBID
+                session.run("""
+                MATCH (n:BusinessRecord {assigned_ubid: $old_ubid})
+                SET n.assigned_ubid = $new_ubid
+                """, old_ubid=old_ubid, new_ubid=new_ubid)
+                
+                # 2. Sync ALL affected nodes in Algolia
+                affected_nodes = session.run("MATCH (n:BusinessRecord {assigned_ubid: $new_ubid}) RETURN n.id AS id", new_ubid=new_ubid)
+                
+                algolia_updates = []
+                for record in affected_nodes:
+                    algolia_updates.append({
+                        "objectID": record["id"],
+                        "assigned_ubid": new_ubid
+                    })
+                write_index.partial_update_objects(algolia_updates)
                 
             # Log Active Learning
             log_active_learning(payload.features, 1)

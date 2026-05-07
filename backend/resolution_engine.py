@@ -86,14 +86,18 @@ def get_candidates(tx, pin_code, record_id):
     result = tx.run(query, pin_code=pin_code, record_id=record_id)
     return [dict(record) for record in result]
 
-def draw_edge(tx, id_a, id_b, score, edge_type):
+def draw_edge(tx, id_a, id_b, score, edge_type, features=None):
     query = f"""
     MATCH (a:BusinessRecord {{id: $id_a}})
     MATCH (b:BusinessRecord {{id: $id_b}})
     MERGE (a)-[r:{edge_type}]->(b)
     SET r.score = $score
     """
-    tx.run(query, id_a=id_a, id_b=id_b, score=score)
+    if features:
+        query += "\nSET r.features = $features"
+        tx.run(query, id_a=id_a, id_b=id_b, score=score, features=features)
+    else:
+        tx.run(query, id_a=id_a, id_b=id_b, score=score)
 
 def index_algolia(record):
     algolia_record = {
@@ -147,7 +151,8 @@ def process_message(msg_val):
                 session.execute_write(upsert_node_neo4j, record)
             elif 0.70 <= best_score < 0.90:
                 print(f"Ambiguous match! Score: {best_score}. Drawing PENDING_REVIEW edge.")
-                session.execute_write(draw_edge, best_candidate['id'], record_id, float(best_score), 'PENDING_REVIEW')
+                features = extract_features(best_candidate, record)
+                session.execute_write(draw_edge, best_candidate['id'], record_id, float(best_score), 'PENDING_REVIEW', features)
             else:
                 print(f"No match. Score: {best_score}. Keeping separate.")
         

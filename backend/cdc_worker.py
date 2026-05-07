@@ -53,7 +53,8 @@ def main():
     # In a real app, you'd store this in a database or file so it persists across restarts
     # For this prototype, we'll just start from the beginning of time if we want all records
     # Or just use the current time to only get new ones. Let's use a very old time to pick up seeded data.
-    last_checked = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    # last_checked = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    last_checked = datetime.now(timezone.utc)
     
     print("CDC Worker started. Polling for new records...")
     while True:

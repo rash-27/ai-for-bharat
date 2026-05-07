@@ -1,0 +1,2 @@
+name_jaro_winkler,address_levenshtein,tax_id_exact,is_missing_pan,label
+0.7231670618057251,0.7231670618057251,0.0,0.0,1

@@ -73,12 +73,7 @@ def extract_features(record_a, record_b):
     
     is_missing_pan = 1 if not pan_a or not pan_b else 0
     
-    return {
-        'name_jaro_winkler': name_jaro_winkler,
-        'address_levenshtein': address_levenshtein,
-        'tax_id_exact': tax_id_exact,
-        'is_missing_pan': is_missing_pan
-    }
+    return [name_jaro_winkler, address_levenshtein, tax_id_exact, is_missing_pan]
 
 def train_and_save_model():
     print("Fetching data from database...")
@@ -92,7 +87,7 @@ def train_and_save_model():
     y = []
     for pair in pairs:
         features = extract_features(pair['record_a'], pair['record_b'])
-        X.append(list(features.values()))
+        X.append(features)
         y.append(pair['label'])
         
     X = np.array(X)

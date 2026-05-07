@@ -104,7 +104,7 @@ def degrade_record(record, source, base_id, heavy_noise=False):
 
     return degraded
 
-def generate_and_insert_data(num_golden_records=1000, continuous=False):
+def generate_and_insert_data(num_golden_records=100, continuous=False):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -183,5 +183,5 @@ def generate_and_insert_data(num_golden_records=1000, continuous=False):
 
 if __name__ == "__main__":
     setup_tables()
-    # Only seed initial data (1000)
-    generate_and_insert_data(1000, continuous=False)
+    # Only seed initial data (100)
+    generate_and_insert_data(100, continuous=False)
