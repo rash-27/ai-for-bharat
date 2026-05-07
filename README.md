@@ -18,7 +18,7 @@ This project is built on a distributed, event-driven architecture to ensure high
 * **Component:** `backend/resolution_engine.py` & `backend/train_model.py` (XGBoost)
 * **Role:** The brain of the operation. It acts as a Kafka consumer, picking up new business events. It extracts string similarity features (Jaro-Winkler, Levenshtein) and uses a pre-trained XGBoost model to evaluate the probability that the new record matches an existing business. 
     * **Score > 0.90:** Auto-Links the records.
-    * **Score 0.70 - 0.89:** Flags as an Ambiguous Match for human review.
+    * **Score 0.70 - 0.89:** Flags as an Ambiguous Match for human review. *(Human resolutions are logged to `training_logs.csv` for active learning)*.
     * **Score < 0.70:** Rejects the match (isolated record).
 
 ### 4. Graph State Management
@@ -47,6 +47,7 @@ This project is built on a distributed, event-driven architecture to ensure high
 * Node.js & npm
 * Supabase Account (for PostgreSQL)
 * Algolia Account (for free Search Index)
+* Neo4j AuraDB Account (or local Neo4j Desktop instance)
 
 ### Step 1: Environment Variables
 Create a `.env` file in the `backend/` directory with the following keys:
@@ -69,16 +70,18 @@ ALGOLIA_WRITE_API_KEY=your_write_key
 ```
 
 ### Step 2: Boot Infrastructure
-Start the local Zookeeper, Kafka broker, and Neo4j database using Docker.
+Start the local Zookeeper and Kafka broker using Docker.
 ```bash
 docker-compose up -d
 ```
-*(Wait ~30 seconds for Kafka and Neo4j to fully initialize).*
+*(Wait ~30 seconds for Kafka to fully initialize).*
 
 ### Step 3: Setup the Backend & Data Seed
 Install the Python dependencies, generate the synthetic data, and train the XGBoost model.
 ```bash
 cd backend
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
 # 1. Seed the PostgreSQL database with mock Labour, BESCOM, and KSPCB records
@@ -98,11 +101,11 @@ cd ..
 ```
 
 ### Step 5: Start the Overlay Architecture
-You can run the provided shell script from the root directory to boot the FastAPI server, the React frontend, the CDC Worker, and the Resolution Engine simultaneously.
+You can run the provided shell script from the root directory to boot the FastAPI server, the React frontend, the CDC Worker, the data populator (`populate_records.py`), and the Resolution Engine simultaneously.
 
 ```bash
 chmod +x start_all.sh
 ./start_all.sh
 ```
-* **Frontend:** `http://localhost:5173`
-* **Neo4j Visualizer:** `http://localhost:7474` (Login: neo4j / password)
+* **Frontend Dashboard (Darpan | AI for Bharat):** `http://localhost:5173`
+* **Neo4j Visualizer:** `http://localhost:7474` (If running locally, else use your AuraDB console)
