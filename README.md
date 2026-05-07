@@ -9,6 +9,8 @@ An overlay architecture designed to solve the problem of fragmented, siloed busi
 | Frontend (Vercel) | https://ai-for-bharat-one.vercel.app/ |
 | Backend API (Render) | https://ai-for-bharat-backend-8y2k.onrender.com |
 
+** Backend on Render takes some time to become live.. So it may take some time to populate the initial values
+
 ## Internal Components & Architecture
 
 This project is built on a distributed, event-driven architecture to ensure high throughput, fault tolerance, and zero interference with existing state systems.
