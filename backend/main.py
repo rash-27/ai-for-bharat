@@ -164,8 +164,9 @@ def get_ubid_details(ubid_id: str):
         latest_event = None
         for n in nodes:
             # Parse created_at / updated_at
-            if n.get("updated_at"):
-                dt = datetime.fromisoformat(n["updated_at"])
+            event_date_str = n.get("updated_at") or n.get("created_at")
+            if event_date_str:
+                dt = datetime.fromisoformat(event_date_str)
                 if not latest_event or dt > latest_event:
                     latest_event = dt
                     

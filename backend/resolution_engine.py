@@ -71,6 +71,7 @@ def upsert_node_neo4j(tx, record):
         'pan_number': record.get('pan_number'),
         'status': record.get('status'),
         'created_at': record.get('created_at'),
+        'updated_at': record.get('updated_at'),
         'assigned_ubid': record.get('assigned_ubid')
     }
     tx.run(query, id=record['id'], props=props)

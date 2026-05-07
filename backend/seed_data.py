@@ -114,15 +114,26 @@ def generate_and_insert_data(num_golden_records=1000, continuous=False):
             pan = fake.pystr_format('?????####?')
             gstin = f"29{pan}1Z{fake.pystr_format('?')}"
             
+            from datetime import timedelta
+            
+            golden_status = random.choice(['ACTIVE', 'INACTIVE', 'DORMANT'])
+            
+            if golden_status == 'ACTIVE':
+                updated = datetime.now(timezone.utc) - timedelta(days=random.randint(0, 365))
+            elif golden_status == 'INACTIVE':
+                updated = datetime.now(timezone.utc) - timedelta(days=random.randint(600, 1000))
+            else:
+                updated = datetime.now(timezone.utc) - timedelta(days=random.randint(1100, 2000))
+            
             golden_record = {
                 'company_name': fake.company(),
                 'address': fake.address().replace('\n', ', '),
                 'pin_code': fake.postcode(),
                 'pan_number': pan,
                 'gstin': gstin,
-                'status': random.choice(['ACTIVE', 'INACTIVE', 'DORMANT']),
-                'created_at': datetime.now(timezone.utc),
-                'updated_at': datetime.now(timezone.utc)
+                'status': golden_status,
+                'created_at': updated - timedelta(days=random.randint(30, 365)),
+                'updated_at': updated
             }
             
             if random.random() > 0.1:
