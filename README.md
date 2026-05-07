@@ -39,7 +39,7 @@ This project is built on a distributed, event-driven architecture to ensure high
 
 ---
 
-## 🚀 Instructions to Run (Local Sandbox)
+## Instructions to Run (Local Sandbox)
 
 ### Prerequisites
 * Docker & Docker Compose
