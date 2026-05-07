@@ -2,6 +2,13 @@
 
 An overlay architecture designed to solve the problem of fragmented, siloed business identity data across government departments (Labour, BESCOM, KSPCB). Darpan actively monitors legacy operational databases, probabilistically matches records using Machine Learning (XGBoost), and constructs a **Unified Business ID (UBID)** within a Graph Database—all without altering a single byte of source data.
 
+## Live Deployment
+
+| Service | URL |
+|---|---|
+| Frontend (Vercel) | https://ai-for-bharat-one.vercel.app/ |
+| Backend API (Render) | https://ai-for-bharat-backend-8y2k.onrender.com |
+
 ## Internal Components & Architecture
 
 This project is built on a distributed, event-driven architecture to ensure high throughput, fault tolerance, and zero interference with existing state systems.
