@@ -1,8 +1,8 @@
 #!/bin/bash
 echo "Stopping all Darpan components..."
 
-echo "Stopping seed_data.py..."
-pkill -f "python seed_data.py" || echo "Not running."
+echo "Stopping populate_records.py..."
+pkill -f "python populate_records.py" || echo "Not running."
 
 echo "Stopping CDC worker..."
 pkill -f "python cdc_worker.py" || echo "Not running."

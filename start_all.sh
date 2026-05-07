@@ -5,8 +5,8 @@ cd /home/rash-27/projects/hackathon/ai-for-bharat
 cd backend
 source venv/bin/activate
 
-echo "Starting seed_data.py in background..."
-python seed_data.py > seed.log 2>&1 &
+echo "Starting populate_records.py in background..."
+python populate_records.py > populate.log 2>&1 &
 
 echo "Starting CDC worker..."
 python cdc_worker.py > cdc.log 2>&1 &

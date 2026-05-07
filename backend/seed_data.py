@@ -38,7 +38,7 @@ def setup_tables():
     cursor.close()
     conn.close()
 
-def degrade_record(record, source, base_id):
+def degrade_record(record, source, base_id, is_continuous=False):
     """Introduce noise for the source systems."""
     degraded = record.copy()
     degraded['source_system'] = source
@@ -62,13 +62,28 @@ def degrade_record(record, source, base_id):
         if degraded['gstin'] and random.random() > 0.5:
             degraded['pan_number'] = None
 
+    # ADD SEVERE NOISE FOR CONTINUOUS STREAM TO TRIGGER PENDING_REVIEW & NO MATCH
+    if is_continuous:
+        if random.random() > 0.4:
+            # Severe name truncation
+            degraded['company_name'] = degraded['company_name'][:len(degraded['company_name'])//2]
+        if random.random() > 0.6:
+            # Slight PAN modification (breaks exact match)
+            if degraded['pan_number']:
+                degraded['pan_number'] = degraded['pan_number'][:-1] + 'X'
+        if random.random() > 0.3:
+            # Severe address degradation
+            words = degraded['address'].split()
+            if len(words) > 2:
+                degraded['address'] = " ".join(words[1:len(words)//2])
+
     return degraded
 
 def generate_and_insert_data(num_golden_records=100, continuous=False):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    def insert_batch(count):
+    def insert_batch(count, is_continuous=False):
         for _ in range(count):
             base_id = str(uuid.uuid4())
             pan = fake.pystr_format('?????####?')
@@ -86,7 +101,7 @@ def generate_and_insert_data(num_golden_records=100, continuous=False):
             }
             
             if random.random() > 0.1:
-                r = degrade_record(golden_record, 'labour', base_id)
+                r = degrade_record(golden_record, 'labour', base_id, is_continuous)
                 cursor.execute(
                     """INSERT INTO labour (id, source_system, company_name, address, pin_code, pan_number, gstin, status, created_at, updated_at) 
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
@@ -94,7 +109,7 @@ def generate_and_insert_data(num_golden_records=100, continuous=False):
                 )
                 
             if random.random() > 0.2:
-                r = degrade_record(golden_record, 'bescom', base_id)
+                r = degrade_record(golden_record, 'bescom', base_id, is_continuous)
                 cursor.execute(
                     """INSERT INTO bescom (id, source_system, company_name, address, pin_code, pan_number, gstin, status, created_at, updated_at) 
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
@@ -102,7 +117,7 @@ def generate_and_insert_data(num_golden_records=100, continuous=False):
                 )
                 
             if random.random() > 0.4:
-                r = degrade_record(golden_record, 'kspcb', base_id)
+                r = degrade_record(golden_record, 'kspcb', base_id, is_continuous)
                 cursor.execute(
                     """INSERT INTO kspcb (id, source_system, company_name, address, pin_code, pan_number, gstin, status, created_at, updated_at) 
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
@@ -110,16 +125,17 @@ def generate_and_insert_data(num_golden_records=100, continuous=False):
                 )
         conn.commit()
 
-    print(f"Seeding initial {num_golden_records} records for training data...")
-    insert_batch(num_golden_records)
-    print("Initial data seeded successfully!")
+    if num_golden_records > 0:
+        print(f"Seeding initial {num_golden_records} records for training data...")
+        insert_batch(num_golden_records, is_continuous=False)
+        print("Initial data seeded successfully!")
 
     if continuous:
         import time
         print("Starting continuous data stream (1 record every 10 seconds)...")
         while True:
             time.sleep(10)
-            insert_batch(1)
+            insert_batch(1, is_continuous=True)
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Inserted 1 new record.")
 
     cursor.close()
@@ -127,5 +143,5 @@ def generate_and_insert_data(num_golden_records=100, continuous=False):
 
 if __name__ == "__main__":
     setup_tables()
-    # Run continuous ingestion
-    generate_and_insert_data(100, continuous=True)
+    # Only seed initial data
+    generate_and_insert_data(100, continuous=False)
